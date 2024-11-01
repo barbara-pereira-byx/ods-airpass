@@ -60,30 +60,7 @@ def validar_email(value):
 
 
 class FuncionarioManager(BaseUserManager):
-    """
-    Gerenciador de usuários para o modelo Funcionario.
-
-    Esta classe fornece métodos para criar usuários e superusuários.
-    """
-
     def create_user(self, email, cpf, nome, data_nascimento, password=None):
-        """
-        Cria e salva um novo usuário Funcionario com um email, CPF e senha.
-
-        Args:
-            email (str): O e-mail do funcionário. Deve ser fornecido.
-            cpf (str): O CPF do funcionário. Deve ser fornecido.
-            nome (str): O nome do funcionário. Deve ser fornecido.
-            data_nascimento (datetime): A data de nascimento do funcionário.
-            cargo (int): O cargo do funcionário, representado por um inteiro.
-            password (str, optional): A senha do funcionário. Se não fornecida, será definida como None.
-
-        Raises:
-            ValueError: Se o e-mail, CPF ou nome não forem fornecidos.
-
-        Returns:
-            Funcionario: O novo objeto Funcionario criado e salvo no banco de dados.
-        """
         if not email:
             raise ValueError('O email deve ser fornecido')
         if not cpf:
@@ -98,25 +75,11 @@ class FuncionarioManager(BaseUserManager):
             nome=nome,
             data_nascimento=data_nascimento,
         )
-        funcionario.set_password(password)  # Define a senha
+        funcionario.set_password(password)
         funcionario.save(using=self._db)
         return funcionario
 
     def create_superuser(self, email, cpf, nome, data_nascimento, password=None):
-        """
-        Cria e salva um novo superusuário Funcionario com um e-mail, CPF e senha.
-
-        Args:
-            email (str): O e-mail do funcionário. Deve ser fornecido.
-            cpf (str): O CPF do funcionário. Deve ser fornecido.
-            nome (str): O nome do funcionário. Deve ser fornecido.
-            data_nascimento (datetime): A data de nascimento do funcionário.
-            cargo (int): O cargo do funcionário, representado por um inteiro.
-            password (str, optional): A senha do funcionário. Se não fornecida, será definida como None.
-
-        Returns:
-            Funcionario: O novo objeto Funcionario criado e salvo no banco de dados, com permissões de superusuário.
-        """
         funcionario = self.create_user(
             email,
             cpf,
@@ -124,7 +87,6 @@ class FuncionarioManager(BaseUserManager):
             data_nascimento,
             password=password,
         )
-        funcionario.is_superuser = True
         funcionario.is_staff = True
         funcionario.save(using=self._db)
         return funcionario
@@ -133,11 +95,11 @@ class FuncionarioManager(BaseUserManager):
 ##------------------------------------- CRIAÇÃO DOS MODELOS/TABELAS -----------------------------------------
 
 
-class Funcionario(AbstractBaseUser, PermissionsMixin):
+class Funcionario(AbstractBaseUser):
     nome = models.CharField(
         max_length=100,
         verbose_name='Nome do Funcionário',
-        default='Funcionário Padrão',  # Valor padrão
+        default='Funcionário Padrão',
     )
     data_nascimento = models.DateField(
         verbose_name='Data de nascimento',
@@ -173,7 +135,6 @@ class Funcionario(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
     objects = FuncionarioManager()
 
     USERNAME_FIELD = 'email'
@@ -187,12 +148,41 @@ class Funcionario(AbstractBaseUser, PermissionsMixin):
         return self.nome
 
     def has_perm(self, perm, obj=None):
-        """Verifica se o funcionário possui uma permissão específica."""
-        return True  # ou lógica personalizada
+        return True
 
     def has_module_perms(self, app_label):
-        """Verifica se o funcionário tem permissões para o módulo."""
-        return True  # ou lógica personalizada
+        return True
+
+class Voo(models.Model):
+    origem = models.CharField(
+        max_length=100,
+        verbose_name='Origem do Voo',
+        validators=[MaxLengthValidator(100)],
+        default='Desconhecida',  # Valor padrão
+    )
+    destino = models.CharField(
+        max_length=100,
+        verbose_name='Destino do Voo',
+        validators=[MaxLengthValidator(100)],
+        default='Desconhecido',  # Valor padrão
+    )
+    numero = models.IntegerField(
+        verbose_name='Número do Voo',
+        validators=[MinValueValidator(1)],
+        default=1,
+    )
+    status = models.SmallIntegerField(
+        verbose_name='Status do Voo',
+        choices=STATUS,
+        default=0,  # Ajuste conforme necessário para o status padrão
+    )
+
+    class Meta:
+        verbose_name = 'Voo'
+        verbose_name_plural = 'Voos'
+
+    def __str__(self):
+        return f'{self.origem} - {self.destino}'
 
 class Aviao(models.Model):
     capacidade = models.IntegerField(
@@ -213,6 +203,12 @@ class Aviao(models.Model):
         verbose_name='Nome da Companhia do Avião',
         validators=[MinLengthValidator(2), MaxLengthValidator(150)],
         default='Companhia Padrão',  # Valor padrão
+    )
+    voo = models.ForeignKey(
+        Voo,
+        verbose_name='Voo',
+        null=True,
+        on_delete=models.SET_NULL
     )
 
     class Meta:
@@ -245,6 +241,12 @@ class Piloto(models.Model):
         validators=[MinLengthValidator(5), MaxLengthValidator(20), RegexValidator(r'^[a-zA-Z0-9]*$', 'A licença deve conter apenas caracteres alfanuméricos.')],
         default='LICENCA123',  # Valor padrão
     )
+    voo = models.ForeignKey(
+        Voo,
+        verbose_name='Voo',
+        null=True,
+        on_delete=models.SET_NULL
+    )
 
     class Meta:
         verbose_name = 'Piloto'
@@ -253,48 +255,6 @@ class Piloto(models.Model):
     def __str__(self):
         return self.nome
 
-class Voo(models.Model):
-    origem = models.CharField(
-        max_length=100,
-        verbose_name='Origem do Voo',
-        validators=[MaxLengthValidator(100)],
-        default='Desconhecida',  # Valor padrão
-    )
-    destino = models.CharField(
-        max_length=100,
-        verbose_name='Destino do Voo',
-        validators=[MaxLengthValidator(100)],
-        default='Desconhecido',  # Valor padrão
-    )
-    numero = models.IntegerField(
-        verbose_name='Número do Voo',
-        validators=[MinValueValidator(1)],
-        default=1,
-    )
-    status = models.SmallIntegerField(
-        verbose_name='Status do Voo',
-        choices=STATUS,
-        default=0,  # Ajuste conforme necessário para o status padrão
-    )
-    aviao = models.ForeignKey(
-        Aviao,
-        verbose_name='Avião',
-        null=True,
-        on_delete=models.SET_NULL
-    )
-    piloto = models.ForeignKey(
-        Piloto,
-        verbose_name='Piloto',
-        null=True,
-        on_delete=models.SET_NULL
-    )
-
-    class Meta:
-        verbose_name = 'Voo'
-        verbose_name_plural = 'Voos'
-
-    def __str__(self):
-        return f'{self.origem} - {self.destino}'
 
 class Passageiro(models.Model):
     nome = models.CharField(

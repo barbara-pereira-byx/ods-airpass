@@ -6,3 +6,6 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+# Ignora tudo em /venv_ods_airpass, exceto o diretório principal
+!/venv_ods_airpass/
+!venv_ods_airpass/**/*

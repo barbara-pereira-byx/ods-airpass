@@ -1,0 +1,179 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block object-tools %}
+    {% if change %}{% if not is_popup %}
+        <ul class="object-tools" style="float: right; display: flex; gap: 10px;">
+            {% if botao_alterar_status_voo %}
+                <li>
+                    <form action="{% url 'agendado_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btnAgendado" onclick="return confirm('Tem certeza que deseja alterar o status do voo para AGENDADO?');">
+                            AGENDADO
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form action="{% url 'em_andamento_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btnEmAndamento" onclick="return confirm('Tem certeza que deseja alterar o status do voo para EM ANDAMENTO?');">
+                            EM ANDAMENTO
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form action="{% url 'atrasado_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btnAtrasado" onclick="return confirm('Tem certeza que deseja alterar o status do voo para ATRASADO?');">
+                            ATRASADO
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form action="{% url 'cancelar_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btnDanger" onclick="return confirm('TTem certeza que deseja alterar o status do voo para CANCELADO?');">
+                            CANCELADO
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form action="{% url 'concluir_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btnConcluir" onclick="return confirm('Tem certeza que deseja alterar o status do voo para CONCLUIDO?');">
+                            CONCLUIDO
+                        </button>
+                    </form>
+                </li>
+            {% endif %}
+
+            {% block object-tools-items %}
+                {% change_form_object_tools %}
+            {% endblock %}
+        </ul>
+    {% endif %}{% endif %}
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .btn {
+        display: inline-block;
+        padding: 8px 12px;
+        text-transform: uppercase;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 20px; /* Arredondamento */
+        cursor: pointer;
+        text-align: center;
+        font-size: 10px;
+    }
+
+    .btnAgendado {
+        background-color: #007bff;
+        border-radius: 20px;
+    }
+
+    .btnEmAndamento {
+        background-color: #ffc107;
+        border-radius: 20px;
+    }
+
+    .btnAtrasado {
+        background-color: #fd7e14;
+        border-radius: 20px;
+    }
+
+    .btnDanger {
+        background-color: #dc3545;
+        border-radius: 20px; /* Certifique-se de que o botão cancelar também está arredondado */
+    }
+
+    .btnConcluir {
+        background-color: #28a745;
+        border-radius: 20px; /* Certifique-se de que o botão cancelar também está arredondado */
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+
+    .btnSuccess {
+        background-color: #28a745;
+    }
+
+    /* Modal styles */
+    .modalBackdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    .modalHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modalCloseBtn {
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .modalFooter {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    /* Exibir a modal */
+    .modalBackdrop.active {
+        display: flex;
+    }
+
+</style>
+{% endblock %}
+
+{% block extrahead %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const openModalBtn = document.getElementById("openModalBtn");
+        const closeModalBtn = document.getElementById("closeModalBtn");
+        const modalBackdrop = document.getElementById("modalBackdrop");
+        const cancelModalBtn = document.getElementById("cancelModalBtn");
+
+        openModalBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            modalBackdrop.classList.add("active");
+        });
+
+        closeModalBtn.addEventListener("click", function () {
+            modalBackdrop.classList.remove("active");
+        });
+
+        cancelModalBtn.addEventListener("click", function () {
+            modalBackdrop.classList.remove("active");
+        });
+
+        window.addEventListener("click", function (event) {
+            if (event.target === modalBackdrop) {
+                modalBackdrop.classList.remove("active");
+            }
+        });
+    });
+</script>
+{% endblock %}

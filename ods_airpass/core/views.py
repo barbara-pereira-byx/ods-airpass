@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.views import View
-from django.shortcuts import redirect, get_object_or_404
-
+from django.shortcuts import get_object_or_404
 from .constants import EnumStatusVoo
 from .models import Voo
 from django.http import HttpResponseRedirect

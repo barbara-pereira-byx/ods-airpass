@@ -154,6 +154,7 @@ class Funcionario(AbstractBaseUser):
         return True
 
 class Voo(models.Model):
+    objects = None
     origem = models.CharField(
         max_length=100,
         verbose_name='Origem do Voo',
@@ -185,6 +186,7 @@ class Voo(models.Model):
         return f'{self.origem} - {self.destino}'
 
 class Aviao(models.Model):
+    objects = None
     capacidade = models.IntegerField(
         verbose_name='Capacidade do Avião',
         blank=False,
@@ -219,6 +221,7 @@ class Aviao(models.Model):
         return self.nome_companhia
 
 class Piloto(models.Model):
+    objects = None
     nome = models.CharField(
         max_length=100,
         verbose_name='Nome do Piloto',
@@ -257,6 +260,7 @@ class Piloto(models.Model):
 
 
 class Passageiro(models.Model):
+    objects = None
     nome = models.CharField(
         max_length=100,
         verbose_name='Nome do Passageiro',
@@ -297,6 +301,11 @@ class Passageiro(models.Model):
         default=0,  # Valor padrão
     )
 
+    def save(self, *args, **kwargs):
+        if self.nome:
+            self.nome = self.nome.upper()
+        super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Passageiro'
         verbose_name_plural = 'Passageiros'
@@ -306,6 +315,7 @@ class Passageiro(models.Model):
 
 
 class Reserva(models.Model):
+    objects = None
     data_reserva = models.DateTimeField(
         verbose_name='Data/hora da Reserva',
         validators=[validar_data_reserva],

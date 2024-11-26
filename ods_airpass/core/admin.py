@@ -191,7 +191,7 @@ class VooResource(resources.ModelResource):
 
 class ReservaInline(admin.TabularInline):
     model = Reserva
-    extra = 1
+    extra = 0
     list_display = [
         'data_reserva',
         'preco',
@@ -230,7 +230,7 @@ class AviaoInline(admin.TabularInline):
         'modelo',
         'capacidade',
     ]
-    extra = 1
+    extra = 0
 
 class PilotooInline(admin.TabularInline):
     model = Piloto
@@ -238,7 +238,7 @@ class PilotooInline(admin.TabularInline):
         'nome',
         'numero_licenca',
     ]
-    extra = 1
+    extra = 0
 
 class VooAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = VooResource

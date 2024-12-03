@@ -223,18 +223,26 @@ class PassageiroAdmin(ExportMixin, admin.ModelAdmin):
     ]
 
 
-class AviaoInline(admin.TabularInline):
+class AviaoAdmin(admin.ModelAdmin):
     model = Aviao
     list_display = [
         'nome_companhia',
         'modelo',
         'capacidade',
     ]
+    search_fields = [
+        'nome_companhia',
+        'modelo',
+    ]
     extra = 0
 
-class PilotooInline(admin.TabularInline):
+class PilotooAdmin(admin.ModelAdmin):
     model = Piloto
     list_display = [
+        'nome',
+        'numero_licenca',
+    ]
+    search_fields = [
         'nome',
         'numero_licenca',
     ]
@@ -243,16 +251,40 @@ class PilotooInline(admin.TabularInline):
 class VooAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = VooResource
     model = Voo
-    search_fields = ['numero','origem', 'destino', 'status']
-    inlines = [ReservaInline,
-               AviaoInline,
-               PilotooInline]
+    search_fields = [
+        'numero',
+        'origem',
+        'destino',
+        'status',
+        'aviao__nome_companhia',
+        'aviao__modelo',
+        'piloto__nome',
+        'piloto__numero_licenca'
+    ]
     list_display = [
         'origem',
         'destino',
         'numero',
         'status',
+        'get_piloto_nome',
+        'get_piloto_numero_licenca',
+        'get_nome_companhia',
     ]
+
+    def get_nome_companhia(self, obj):
+        return obj.aviao.nome_companhia if obj.aviao else '-'
+    get_nome_companhia.short_description = 'Nome da Companhia'
+
+    def get_piloto_nome(self, obj):
+        return obj.piloto.nome if obj.piloto else '-'
+    get_piloto_nome.short_description = 'Nome do Piloto'
+
+    def get_piloto_numero_licenca(self, obj):
+        return obj.piloto.numero_licenca if obj.piloto else '-'
+    get_piloto_nome.short_description = 'Número da Licença do Piloto'
+
+    def get_piloto_nome(self, obj):
+        return obj.piloto.nome if obj.piloto else '-'
 
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -272,5 +304,7 @@ class VooAdmin(ExportMixin, admin.ModelAdmin):
 admin.site.register(Funcionario, FuncionarioAdmin)
 admin.site.register(Voo, VooAdmin)
 admin.site.register(Passageiro, PassageiroAdmin)
+admin.site.register(Aviao, AviaoAdmin)
+admin.site.register(Piloto, PilotooAdmin)
 admin.site.unregister(Group)
 admin.site.unregister(Theme)

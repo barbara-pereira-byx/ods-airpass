@@ -20,11 +20,14 @@ from django.urls import path
 from . import views as core_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', core_views.index, name='index'),
+    path('', core_views.home, name='home'),  # Página inicial
+    path('', admin.site.urls),
     path('cancelar-voo/<int:voo_id>/', core_views.CancelarVooView.as_view(), name='cancelar_voo'),
     path('concluir-voo/<int:voo_id>/', core_views.ConcluirVooView.as_view(), name='concluir_voo'),
     path('atrasado-voo/<int:voo_id>/', core_views.AtrasadoVooView.as_view(), name='atrasado_voo'),
     path('agendado-voo/<int:voo_id>/', core_views.AgendadoVooView.as_view(), name='agendado_voo'),
     path('em-andamento-voo/<int:voo_id>/', core_views.EmAndamentoVooView.as_view(), name='em_andamento_voo'),
 ]
+
+# Se você tiver um arquivo core/urls.py, inclua-o assim:
+# path('core/', include('core.urls')),

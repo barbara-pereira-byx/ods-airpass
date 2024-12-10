@@ -361,4 +361,4 @@ class Reserva(models.Model):
         verbose_name_plural = 'Reservas'
 
     def __str__(self):
-        return f'{self.voo.__str__()}, Data: {self.data_reserva}, Assento: {self.assento}'
+        return f'{self.passageiro.nome}'

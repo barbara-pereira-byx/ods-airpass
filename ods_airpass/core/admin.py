@@ -189,37 +189,65 @@ class VooResource(resources.ModelResource):
         return super().export(queryset=queryset, *args, **kwargs)
 
 
-class ReservaInline(admin.TabularInline):
+class ReservaAdmin(admin.ModelAdmin):
     model = Reserva
     extra = 0
     list_display = [
+        'get_nome_passageiro',
+        'get_nome_funcionario',
+        'get_origem_voo',
+        'get_destino_voo',
+        'get_status_voo',
         'data_reserva',
         'preco',
         'assento',
         'classe',
     ]
+    search_fields = [
+        'passageiro__nome',
+        'funcionario__nome',
+        'voo__origem',
+        'voo__destino',
+    ]
+    def get_nome_passageiro(self, obj):
+        return obj.passageiro.nome if obj.passageiro else '-'
+    get_nome_passageiro.short_description = 'Nome do Passageiro'
+    def get_nome_funcionario(self, obj):
+        return obj.funcionario.nome if obj.funcionario else '-'
+    get_nome_funcionario.short_description = 'Nome do Funcionário'
+    def get_origem_voo(self, obj):
+        return obj.voo.origem if obj.voo else '-'
+    get_origem_voo.short_description = 'Origem do Voo'
+    def get_destino_voo(self, obj):
+        return obj.voo.destino if obj.voo else '-'
+    get_destino_voo.short_description = 'Destino do Voo'
+    def get_status_voo(self, obj):
+        return dict(STATUS).get(obj.voo.status, None) if obj.voo else '-'
+    get_status_voo.short_description = 'Status do Voo'
 
 class FuncionarioAdmin(admin.ModelAdmin):
     model = Funcionario
     search_fields = ['nome','cpf', 'cargo', 'numero_identificacao']
-    inlines = [ReservaInline]
     list_display = [
         'nome',
         'cpf',
         'cargo',
         'supervisor',
         'numero_identificacao',
+        'email'
     ]
 
 
 class PassageiroAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = PassageiroResource
     search_fields = ['nome', 'cpf_passaporte', 'email']
-    inlines = [ReservaInline]
     list_display = [
         'nome',
         'cpf_passaporte',
         'frequencia_voos',
+        'email',
+        'data_nascimento',
+        'nacionalidade',
     ]
 
 
@@ -241,6 +269,8 @@ class PilotooAdmin(admin.ModelAdmin):
     list_display = [
         'nome',
         'numero_licenca',
+        'email',
+        'data_nascimento'
     ]
     search_fields = [
         'nome',
@@ -281,10 +311,7 @@ class VooAdmin(ExportMixin, admin.ModelAdmin):
 
     def get_piloto_numero_licenca(self, obj):
         return obj.piloto.numero_licenca if obj.piloto else '-'
-    get_piloto_nome.short_description = 'Número da Licença do Piloto'
-
-    def get_piloto_nome(self, obj):
-        return obj.piloto.nome if obj.piloto else '-'
+    get_piloto_numero_licenca.short_description = 'Número da Licença do Piloto'
 
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -304,6 +331,7 @@ class VooAdmin(ExportMixin, admin.ModelAdmin):
 admin.site.register(Funcionario, FuncionarioAdmin)
 admin.site.register(Voo, VooAdmin)
 admin.site.register(Passageiro, PassageiroAdmin)
+admin.site.register(Reserva, ReservaAdmin)
 admin.site.register(Aviao, AviaoAdmin)
 admin.site.register(Piloto, PilotooAdmin)
 admin.site.unregister(Group)

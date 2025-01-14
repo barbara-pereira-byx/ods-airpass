@@ -21,14 +21,12 @@ CLASSES = (
     (EnumClasseVoo.ECONOMICA.value, 'Econômica'),
     (EnumClasseVoo.EXECUTIVA.value, 'Executiva'),
     (EnumClasseVoo.PRIMEIRA_CLASSE.value, 'Primeira Classe'),
-    (EnumClasseVoo.CLASSE_BUSINESS.value, 'Classe Business'),
-    (EnumClasseVoo.CLASSE_ECONOMICA_SUPERIOR.value, 'Classe Econômica Superior'),
 )
 
 STATUS = (
     (EnumStatusVoo.AGENDADO.value, 'Agendado'),
-    (EnumStatusVoo.EM_ANDAMENTO.value, 'Em Andamento'),
+    (EnumStatusVoo.CONFIRMADO.value, 'Confirmado'),
     (EnumStatusVoo.ATRASADO.value, 'Atrasado'),
     (EnumStatusVoo.CANCELADO.value, 'Cancelado'),
-    (EnumStatusVoo.CONCLUIDO.value, 'Concluido'),
+    (EnumStatusVoo.FINALIZADO.value, 'Finalizado'),
 )

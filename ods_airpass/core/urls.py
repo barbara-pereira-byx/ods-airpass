@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 from . import views as core_views
 
@@ -26,5 +26,9 @@ urlpatterns = [
     path('concluir-voo/<int:voo_id>/', core_views.ConcluirVooView.as_view(), name='concluir_voo'),
     path('atrasado-voo/<int:voo_id>/', core_views.AtrasadoVooView.as_view(), name='atrasado_voo'),
     path('agendado-voo/<int:voo_id>/', core_views.AgendadoVooView.as_view(), name='agendado_voo'),
-    path('em-andamento-voo/<int:voo_id>/', core_views.EmAndamentoVooView.as_view(), name='em_andamento_voo'),
+    path('confirmado-voo/<int:voo_id>/', core_views.ConfirmadoVooView.as_view(), name='confirmado_voo'),
+]
+
+urlpatterns += [
+    path('i18n/', include('django.conf.urls.i18n')),
 ]

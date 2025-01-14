@@ -19,12 +19,10 @@ class EnumClasseVoo(Enum):
     ECONOMICA = 0
     EXECUTIVA = 1
     PRIMEIRA_CLASSE = 2
-    CLASSE_BUSINESS = 3
-    CLASSE_ECONOMICA_SUPERIOR = 4
 
 class EnumStatusVoo(Enum):
     AGENDADO = 0
-    EM_ANDAMENTO = 1
+    CONFIRMADO = 1
     ATRASADO = 2
     CANCELADO = 3
-    CONCLUIDO = 4
+    FINALIZADO = 4

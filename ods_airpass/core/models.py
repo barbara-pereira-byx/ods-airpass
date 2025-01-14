@@ -1,11 +1,11 @@
 from django.utils import timezone
 import re
-from django.core.exceptions import ValidationError
 from .choices import CARGOS, GENEROS, CLASSES, STATUS
 from django.core.validators import MinValueValidator, MaxValueValidator, MaxLengthValidator, MinLengthValidator, RegexValidator
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.core.exceptions import ValidationError
 
 ##----------------------------------------------- VALIDAÇÕES -----------------------------------------------------
 
@@ -322,10 +322,12 @@ class Reserva(models.Model):
         validators=[validar_data_reserva],
         default=timezone.now,
     )
-    preco = models.FloatField(
+    preco = models.DecimalField(
         verbose_name='Preço da Reserva',
         validators=[MinValueValidator(0)],
         default=0.0,
+        max_digits=10,
+        decimal_places=2
     )
     assento = models.IntegerField(
         verbose_name='Assento Reservado',
@@ -341,7 +343,7 @@ class Reserva(models.Model):
         verbose_name='Passageiro',
         help_text='Passageiro que fez a reserva',
         null=True,
-        on_delete=models.SET_NULL
+        on_delete=models.CASCADE
     )
     funcionario = models.ForeignKey(
         Funcionario,
@@ -353,7 +355,7 @@ class Reserva(models.Model):
         Voo,
         verbose_name='Voo Reservado',
         null=True,
-        on_delete=models.SET_NULL
+        on_delete=models.CASCADE
     )
 
     class Meta:
@@ -361,4 +363,4 @@ class Reserva(models.Model):
         verbose_name_plural = 'Reservas'
 
     def __str__(self):
-        return f'{self.passageiro.nome}'
+        return f'{self.passageiro.nome}' if self.passageiro else '-'

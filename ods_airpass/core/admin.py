@@ -1,13 +1,15 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db.models import Sum
 from import_export.admin import ExportMixin
 from django.contrib.auth.models import Group
 from admin_interface.models import Theme
-from import_export.results import RowResult
+from django import forms
 from .choices import GENEROS, CARGOS, STATUS, CLASSES
 from .constants import EnumStatusVoo
 from .models import Aviao, Funcionario, Passageiro, Piloto, Reserva, Voo
 from import_export import fields
-
+from django.core.exceptions import ValidationError
+import random
 from import_export import resources
 from import_export.fields import Field
 from tablib import Dataset
@@ -184,13 +186,53 @@ class VooResource(resources.ModelResource):
 
     def export(self, queryset=None, *args, **kwargs):
         # Filtro para incluir apenas os voos com status específico
-        status_filtrados = [EnumStatusVoo.EM_ANDAMENTO.value, EnumStatusVoo.ATRASADO.value, EnumStatusVoo.CANCELADO.value]
+        status_filtrados = [EnumStatusVoo.CONFIRMADO.value, EnumStatusVoo.ATRASADO.value, EnumStatusVoo.CANCELADO.value]
         queryset = queryset.filter(status__in=status_filtrados)
         return super().export(queryset=queryset, *args, **kwargs)
 
+class ReservaForm(forms.ModelForm):
+    class Meta:
+        model = Reserva
+        fields = ['data_reserva', 'preco', 'assento', 'classe', 'passageiro', 'funcionario', 'voo']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        voo = cleaned_data.get('voo')
+        classe = cleaned_data.get('classe')
+        assento = cleaned_data.get('assento')
+
+        if voo and voo.aviao:
+            capacidade_aviao = voo.aviao.capacidade
+            capacidade_por_classe = capacidade_aviao // 3
+
+            # Ignorar a reserva atual ao calcular os assentos reservados
+            reserva_atual_id = self.instance.id
+
+            assentos_reservados_na_classe = Reserva.objects.filter(
+                voo=voo, classe=classe
+            ).exclude(id=reserva_atual_id).aggregate(total_assentos=Sum('assento'))['total_assentos'] or 0
+
+            assentos_totais_reservados = Reserva.objects.filter(
+                voo=voo
+            ).exclude(id=reserva_atual_id).aggregate(total_assentos=Sum('assento'))['total_assentos'] or 0
+
+            if assentos_reservados_na_classe + assento > capacidade_por_classe:
+                raise forms.ValidationError(
+                    f"Quantidade de assentos selecionados para essa classe ultrapassa o valor disponível. "
+                    f"Quantidade de assentos disponíveis para reserva: {capacidade_por_classe - assentos_reservados_na_classe}."
+                )
+
+            if assentos_totais_reservados + assento > capacidade_aviao:
+                raise forms.ValidationError(
+                    f"Capacidade total do avião está próxima do limite. "
+                    f"Quantidade de assentos disponíveis para reserva: {capacidade_aviao - assentos_totais_reservados}."
+                )
+
+        return cleaned_data
 
 class ReservaAdmin(admin.ModelAdmin):
     model = Reserva
+    form = ReservaForm
     extra = 0
     list_display = [
         'get_nome_passageiro',
@@ -209,21 +251,66 @@ class ReservaAdmin(admin.ModelAdmin):
         'voo__origem',
         'voo__destino',
     ]
+
     def get_nome_passageiro(self, obj):
         return obj.passageiro.nome if obj.passageiro else '-'
     get_nome_passageiro.short_description = 'Nome do Passageiro'
+
     def get_nome_funcionario(self, obj):
         return obj.funcionario.nome if obj.funcionario else '-'
     get_nome_funcionario.short_description = 'Nome do Funcionário'
+
     def get_origem_voo(self, obj):
         return obj.voo.origem if obj.voo else '-'
     get_origem_voo.short_description = 'Origem do Voo'
+
     def get_destino_voo(self, obj):
         return obj.voo.destino if obj.voo else '-'
     get_destino_voo.short_description = 'Destino do Voo'
+
     def get_status_voo(self, obj):
         return dict(STATUS).get(obj.voo.status, None) if obj.voo else '-'
     get_status_voo.short_description = 'Status do Voo'
+
+    def get_form(self, request, obj=None, **kwargs):
+        print('Entrou')
+        form = super().get_form(request, obj, **kwargs)
+        if not obj:
+            total_reservas = Reserva.objects.count()
+
+            base_price = {
+                1: 300,
+                2: 200,
+                3: 100,
+            }
+
+            classe = form.base_fields.get('classe')
+            print('classe')
+
+            if classe and classe.initial:
+                print('Entrou classe')
+                print(f'Form Fields: {form.base_fields.keys()}')
+                incremento = total_reservas * 1.05
+
+                preco_inicial = random.uniform(
+                    base_price.get(int(classe.initial), 100),
+                    base_price.get(int(classe.initial), 100) + 50
+                ) * incremento
+
+                # Verifique se o campo 'preco' está no formulário antes de definir seu valor inicial
+                if 'preco' in form.base_fields:
+                    print('Preço')
+                    form.base_fields['preco'].initial = round(preco_inicial, 2)
+
+        return form
+
+    def save_model(self, request, obj, form, change):
+        try:
+            obj.save()
+        except ValidationError as e:
+            self.message_user(request, str(e), level=messages.WARNING)
+        else:
+            super().save_model(request, obj, form, change)
 
 class FuncionarioAdmin(admin.ModelAdmin):
     model = Funcionario

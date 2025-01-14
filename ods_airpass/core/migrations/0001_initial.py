@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('origem', models.CharField(default='Desconhecida', max_length=100, validators=[django.core.validators.MaxLengthValidator(100)], verbose_name='Origem do Voo')),
                 ('destino', models.CharField(default='Desconhecido', max_length=100, validators=[django.core.validators.MaxLengthValidator(100)], verbose_name='Destino do Voo')),
                 ('numero', models.IntegerField(default=1, validators=[django.core.validators.MinValueValidator(1)], verbose_name='Número do Voo')),
-                ('status', models.SmallIntegerField(choices=[(0, 'Agendado'), (1, 'Em Andamento'), (2, 'Atrasado'), (3, 'Cancelado'), (4, 'Concluido')], default=0, verbose_name='Status do Voo')),
+                ('status', models.SmallIntegerField(choices=[(0, 'Agendado'), (1, 'Confirmado'), (2, 'Atrasado'), (3, 'Cancelado'), (4, 'Finalizado')], default=0, verbose_name='Status do Voo')),
             ],
             options={
                 'verbose_name': 'Voo',

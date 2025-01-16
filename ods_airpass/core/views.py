@@ -21,10 +21,10 @@ class CancelarVooView(View):
 class ConcluirVooView(View):
     def post(self, request, voo_id):
         voo = get_object_or_404(Voo, id=voo_id)
-        voo.status = EnumStatusVoo.CONCLUIDO.value
+        voo.status = EnumStatusVoo.FINALIZADO.value
         voo.save()
         messages.success(
-            request, 'Status do Voo foi alterado para CONCLUIDO!'
+            request, 'Status do Voo foi alterado para FINALIZADO!'
         )
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -38,13 +38,13 @@ class AtrasadoVooView(View):
         )
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-class EmAndamentoVooView(View):
+class ConfirmadoVooView(View):
     def post(self, request, voo_id):
         voo = get_object_or_404(Voo, id=voo_id)
-        voo.status = EnumStatusVoo.EM_ANDAMENTO.value
+        voo.status = EnumStatusVoo.CONFIRMADO.value
         voo.save()
         messages.success(
-            request, 'Status do Voo foi alterado para EM ANDAMENTO!'
+            request, 'Status do Voo foi alterado para CONFIRMADO!'
         )
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 

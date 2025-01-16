@@ -6,6 +6,11 @@ from django.core.validators import MinValueValidator, MaxValueValidator, MaxLeng
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from dotenv import load_dotenv
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+import os
+load_dotenv()
 
 ##----------------------------------------------- VALIDAÇÕES -----------------------------------------------------
 
@@ -359,6 +364,42 @@ class Reserva(models.Model):
     class Meta:
         verbose_name = 'Reserva'
         verbose_name_plural = 'Reservas'
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        classe_map = dict(CLASSES)
+        if self.passageiro and self.passageiro.email:
+            assunto = "Reserva Confirmada"
+            mensagem = f"""
+            Olá {self.passageiro.nome},
 
+            Sua reserva foi realizada com sucesso!
+
+            Detalhes da reserva:
+            Data/Hora: {self.data_reserva.strftime('%d/%m/%Y às %H:%M')}
+            Preço: R${self.preco}
+            Assento: {self.assento}
+            Classe: {classe_map.get(self.classe, 'Desconhecido')}
+            Voo: {self.voo}
+
+            Agradecemos por escolher nossa companhia aérea!
+
+            Atenciosamente,
+            Sua Companhia Aérea
+            """
+            message = Mail(
+                from_email='no.reply.ods.airpass@gmail.com',
+                to_emails=self.passageiro.email,
+                subject=assunto,
+                plain_text_content=mensagem,
+            )
+            try:
+                # Usando a variável de ambiente para a chave de API
+                print('SENDGRID_API_KEY')
+                sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
+                sg = SendGridAPIClient(sendgrid_api_key)
+                response = sg.send(message)
+                print(response.status_code)
+            except Exception as e:
+                print(e)
     def __str__(self):
         return f'{self.voo.__str__()}, Data: {self.data_reserva}, Assento: {self.assento}'

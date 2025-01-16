@@ -14,10 +14,10 @@
                     </form>
                 </li>
                 <li>
-                    <form action="{% url 'em_andamento_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
+                    <form action="{% url 'confirmado_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
                         {% csrf_token %}
-                        <button type="submit" class="btn btnEmAndamento" onclick="return confirm('Tem certeza que deseja alterar o status do voo para EM ANDAMENTO?');">
-                            EM ANDAMENTO
+                        <button type="submit" class="btn btnConfirmado" onclick="return confirm('Tem certeza que deseja alterar o status do voo para CONFIRMADO?');">
+                            CONFIRMADO
                         </button>
                     </form>
                 </li>
@@ -40,8 +40,8 @@
                 <li>
                     <form action="{% url 'concluir_voo' voo_id=object_id %}" method="post" class="cancelarVooForm">
                         {% csrf_token %}
-                        <button type="submit" class="btn btnConcluir" onclick="return confirm('Tem certeza que deseja alterar o status do voo para CONCLUIDO?');">
-                            CONCLUIDO
+                        <button type="submit" class="btn btnConcluir" onclick="return confirm('Tem certeza que deseja alterar o status do voo para FINALIZADO?');">
+                            FINALIZADO
                         </button>
                     </form>
                 </li>
@@ -75,7 +75,7 @@
         border-radius: 20px;
     }
 
-    .btnEmAndamento {
+    .btnConfirmado {
         background-color: #ffc107;
         border-radius: 20px;
     }

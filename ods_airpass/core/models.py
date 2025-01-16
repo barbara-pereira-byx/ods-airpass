@@ -4,8 +4,14 @@ from django.core.exceptions import ValidationError
 from .choices import CARGOS, GENEROS, CLASSES, STATUS
 from django.core.validators import MinValueValidator, MaxValueValidator, MaxLengthValidator, MinLengthValidator, RegexValidator
 import uuid
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
+from django.core.exceptions import ValidationError
+from dotenv import load_dotenv
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+import os
+load_dotenv()
 
 ##----------------------------------------------- VALIDAÇÕES -----------------------------------------------------
 
@@ -153,38 +159,6 @@ class Funcionario(AbstractBaseUser):
     def has_module_perms(self, app_label):
         return True
 
-class Voo(models.Model):
-    objects = None
-    origem = models.CharField(
-        max_length=100,
-        verbose_name='Origem do Voo',
-        validators=[MaxLengthValidator(100)],
-        default='Desconhecida',  # Valor padrão
-    )
-    destino = models.CharField(
-        max_length=100,
-        verbose_name='Destino do Voo',
-        validators=[MaxLengthValidator(100)],
-        default='Desconhecido',  # Valor padrão
-    )
-    numero = models.IntegerField(
-        verbose_name='Número do Voo',
-        validators=[MinValueValidator(1)],
-        default=1,
-    )
-    status = models.SmallIntegerField(
-        verbose_name='Status do Voo',
-        choices=STATUS,
-        default=0,  # Ajuste conforme necessário para o status padrão
-    )
-
-    class Meta:
-        verbose_name = 'Voo'
-        verbose_name_plural = 'Voos'
-
-    def __str__(self):
-        return f'{self.origem} - {self.destino}'
-
 class Aviao(models.Model):
     objects = None
     capacidade = models.IntegerField(
@@ -205,12 +179,6 @@ class Aviao(models.Model):
         verbose_name='Nome da Companhia do Avião',
         validators=[MinLengthValidator(2), MaxLengthValidator(150)],
         default='Companhia Padrão',  # Valor padrão
-    )
-    voo = models.ForeignKey(
-        Voo,
-        verbose_name='Voo',
-        null=True,
-        on_delete=models.SET_NULL
     )
 
     class Meta:
@@ -244,12 +212,6 @@ class Piloto(models.Model):
         validators=[MinLengthValidator(5), MaxLengthValidator(20), RegexValidator(r'^[a-zA-Z0-9]*$', 'A licença deve conter apenas caracteres alfanuméricos.')],
         default='LICENCA123',  # Valor padrão
     )
-    voo = models.ForeignKey(
-        Voo,
-        verbose_name='Voo',
-        null=True,
-        on_delete=models.SET_NULL
-    )
 
     class Meta:
         verbose_name = 'Piloto'
@@ -257,6 +219,51 @@ class Piloto(models.Model):
 
     def __str__(self):
         return self.nome
+
+class Voo(models.Model):
+    objects = None
+    origem = models.CharField(
+        max_length=100,
+        verbose_name='Origem do Voo',
+        validators=[MaxLengthValidator(100)],
+        default='Desconhecida',  # Valor padrão
+    )
+    destino = models.CharField(
+        max_length=100,
+        verbose_name='Destino do Voo',
+        validators=[MaxLengthValidator(100)],
+        default='Desconhecido',  # Valor padrão
+    )
+    numero = models.IntegerField(
+        verbose_name='Número do Voo',
+        validators=[MinValueValidator(1)],
+        default=1,
+    )
+    status = models.SmallIntegerField(
+        verbose_name='Status do Voo',
+        choices=STATUS,
+        default=0,  # Ajuste conforme necessário para o status padrão
+    )
+    piloto = models.ForeignKey(
+        Piloto,
+        verbose_name='Piloto',
+        null=True,
+        on_delete=models.CASCADE
+    )
+    aviao = models.ForeignKey(
+        Aviao,
+        verbose_name='Avião',
+        null=True,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = 'Voo'
+        verbose_name_plural = 'Voos'
+
+    def __str__(self):
+        return f'{self.origem} - {self.destino}'
+
 
 
 class Passageiro(models.Model):
@@ -358,6 +365,40 @@ class Reserva(models.Model):
     class Meta:
         verbose_name = 'Reserva'
         verbose_name_plural = 'Reservas'
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        classe_map = dict(CLASSES)
+        if self.passageiro and self.passageiro.email:
+            assunto = "Reserva Confirmada"
+            mensagem = f"""
+            Olá {self.passageiro.nome},
+            Sua reserva foi realizada com sucesso!
+            Detalhes da reserva:
+            Data/Hora: {self.data_reserva.strftime('%d/%m/%Y às %H:%M')}
+            Preço: R${self.preco}
+            Assento: {self.assento}
+            Classe: {classe_map.get(self.classe, 'Desconhecido')}
+            Voo: {self.voo}
+            Agradecemos por escolher nossa companhia aérea!
+            Atenciosamente,
+            Sua Companhia Aérea
+            """
+            message = Mail(
+                from_email='no.reply.ods.airpass@gmail.com',
+                to_emails=self.passageiro.email,
+                subject=assunto,
+                plain_text_content=mensagem,
+            )
+            try:
+                # Usando a variável de ambiente para a chave de API
+                print('SENDGRID_API_KEY')
+                sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
+                sg = SendGridAPIClient(sendgrid_api_key)
+                response = sg.send(message)
+                print(response.status_code)
+            except Exception as e:
+                print(e)
 
     def __str__(self):
         return f'{self.voo.__str__()}, Data: {self.data_reserva}, Assento: {self.assento}'

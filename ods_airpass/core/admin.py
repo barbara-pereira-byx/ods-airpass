@@ -1,13 +1,15 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db.models import Sum
 from import_export.admin import ExportMixin
 from django.contrib.auth.models import Group
 from admin_interface.models import Theme
-from import_export.results import RowResult
+from django import forms
 from .choices import GENEROS, CARGOS, STATUS, CLASSES
 from .constants import EnumStatusVoo
 from .models import Aviao, Funcionario, Passageiro, Piloto, Reserva, Voo
 from import_export import fields
-
+from django.core.exceptions import ValidationError
+import random
 from import_export import resources
 from import_export.fields import Field
 from tablib import Dataset
@@ -184,57 +186,180 @@ class VooResource(resources.ModelResource):
 
     def export(self, queryset=None, *args, **kwargs):
         # Filtro para incluir apenas os voos com status específico
-        status_filtrados = [EnumStatusVoo.EM_ANDAMENTO.value, EnumStatusVoo.ATRASADO.value, EnumStatusVoo.CANCELADO.value]
+        status_filtrados = [EnumStatusVoo.CONFIRMADO.value, EnumStatusVoo.ATRASADO.value, EnumStatusVoo.CANCELADO.value]
         queryset = queryset.filter(status__in=status_filtrados)
         return super().export(queryset=queryset, *args, **kwargs)
 
+class ReservaForm(forms.ModelForm):
+    class Meta:
+        model = Reserva
+        fields = ['data_reserva', 'preco', 'assento', 'classe', 'passageiro', 'funcionario', 'voo']
 
-class ReservaInline(admin.TabularInline):
+    def clean(self):
+        cleaned_data = super().clean()
+        voo = cleaned_data.get('voo')
+        classe = cleaned_data.get('classe')
+        assento = cleaned_data.get('assento')
+
+        if voo and voo.aviao:
+            capacidade_aviao = voo.aviao.capacidade
+            capacidade_por_classe = capacidade_aviao // 3
+
+            # Ignorar a reserva atual ao calcular os assentos reservados
+            reserva_atual_id = self.instance.id
+
+            assentos_reservados_na_classe = Reserva.objects.filter(
+                voo=voo, classe=classe
+            ).exclude(id=reserva_atual_id).aggregate(total_assentos=Sum('assento'))['total_assentos'] or 0
+
+            assentos_totais_reservados = Reserva.objects.filter(
+                voo=voo
+            ).exclude(id=reserva_atual_id).aggregate(total_assentos=Sum('assento'))['total_assentos'] or 0
+
+            if assentos_reservados_na_classe + assento > capacidade_por_classe:
+                raise forms.ValidationError(
+                    f"Quantidade de assentos selecionados para essa classe ultrapassa o valor disponível. "
+                    f"Quantidade de assentos disponíveis para reserva: {capacidade_por_classe - assentos_reservados_na_classe}."
+                )
+
+            if assentos_totais_reservados + assento > capacidade_aviao:
+                raise forms.ValidationError(
+                    f"Capacidade total do avião está próxima do limite. "
+                    f"Quantidade de assentos disponíveis para reserva: {capacidade_aviao - assentos_totais_reservados}."
+                )
+
+        return cleaned_data
+
+class ReservaAdmin(admin.ModelAdmin):
     model = Reserva
+    form = ReservaForm
     extra = 0
     list_display = [
+        'get_nome_passageiro',
+        'get_nome_funcionario',
+        'get_origem_voo',
+        'get_destino_voo',
+        'get_status_voo',
         'data_reserva',
         'preco',
         'assento',
         'classe',
     ]
+    search_fields = [
+        'passageiro__nome',
+        'funcionario__nome',
+        'voo__origem',
+        'voo__destino',
+    ]
+
+    def get_nome_passageiro(self, obj):
+        return obj.passageiro.nome if obj.passageiro else '-'
+    get_nome_passageiro.short_description = 'Nome do Passageiro'
+
+    def get_nome_funcionario(self, obj):
+        return obj.funcionario.nome if obj.funcionario else '-'
+    get_nome_funcionario.short_description = 'Nome do Funcionário'
+
+    def get_origem_voo(self, obj):
+        return obj.voo.origem if obj.voo else '-'
+    get_origem_voo.short_description = 'Origem do Voo'
+
+    def get_destino_voo(self, obj):
+        return obj.voo.destino if obj.voo else '-'
+    get_destino_voo.short_description = 'Destino do Voo'
+
+    def get_status_voo(self, obj):
+        return dict(STATUS).get(obj.voo.status, None) if obj.voo else '-'
+    get_status_voo.short_description = 'Status do Voo'
+
+    def get_form(self, request, obj=None, **kwargs):
+        print('Entrou')
+        form = super().get_form(request, obj, **kwargs)
+        if not obj:
+            total_reservas = Reserva.objects.count()
+
+            base_price = {
+                1: 300,
+                2: 200,
+                3: 100,
+            }
+
+            classe = form.base_fields.get('classe')
+            print('classe')
+
+            if classe and classe.initial:
+                print('Entrou classe')
+                print(f'Form Fields: {form.base_fields.keys()}')
+                incremento = total_reservas * 1.05
+
+                preco_inicial = random.uniform(
+                    base_price.get(int(classe.initial), 100),
+                    base_price.get(int(classe.initial), 100) + 50
+                ) * incremento
+
+                # Verifique se o campo 'preco' está no formulário antes de definir seu valor inicial
+                if 'preco' in form.base_fields:
+                    print('Preço')
+                    form.base_fields['preco'].initial = round(preco_inicial, 2)
+
+        return form
+
+    def save_model(self, request, obj, form, change):
+        try:
+            obj.save()
+        except ValidationError as e:
+            self.message_user(request, str(e), level=messages.WARNING)
+        else:
+            super().save_model(request, obj, form, change)
 
 class FuncionarioAdmin(admin.ModelAdmin):
     model = Funcionario
     search_fields = ['nome','cpf', 'cargo', 'numero_identificacao']
-    inlines = [ReservaInline]
     list_display = [
         'nome',
         'cpf',
         'cargo',
         'supervisor',
         'numero_identificacao',
+        'email'
     ]
 
 
 class PassageiroAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = PassageiroResource
     search_fields = ['nome', 'cpf_passaporte', 'email']
-    inlines = [ReservaInline]
     list_display = [
         'nome',
         'cpf_passaporte',
         'frequencia_voos',
+        'email',
+        'data_nascimento',
+        'nacionalidade',
     ]
 
 
-class AviaoInline(admin.TabularInline):
+class AviaoAdmin(admin.ModelAdmin):
     model = Aviao
     list_display = [
         'nome_companhia',
         'modelo',
         'capacidade',
     ]
+    search_fields = [
+        'nome_companhia',
+        'modelo',
+    ]
     extra = 0
 
-class PilotooInline(admin.TabularInline):
+class PilotooAdmin(admin.ModelAdmin):
     model = Piloto
     list_display = [
+        'nome',
+        'numero_licenca',
+        'email',
+        'data_nascimento'
+    ]
+    search_fields = [
         'nome',
         'numero_licenca',
     ]
@@ -243,16 +368,37 @@ class PilotooInline(admin.TabularInline):
 class VooAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = VooResource
     model = Voo
-    search_fields = ['numero','origem', 'destino', 'status']
-    inlines = [ReservaInline,
-               AviaoInline,
-               PilotooInline]
+    search_fields = [
+        'numero',
+        'origem',
+        'destino',
+        'status',
+        'aviao__nome_companhia',
+        'aviao__modelo',
+        'piloto__nome',
+        'piloto__numero_licenca'
+    ]
     list_display = [
         'origem',
         'destino',
         'numero',
         'status',
+        'get_piloto_nome',
+        'get_piloto_numero_licenca',
+        'get_nome_companhia',
     ]
+
+    def get_nome_companhia(self, obj):
+        return obj.aviao.nome_companhia if obj.aviao else '-'
+    get_nome_companhia.short_description = 'Nome da Companhia'
+
+    def get_piloto_nome(self, obj):
+        return obj.piloto.nome if obj.piloto else '-'
+    get_piloto_nome.short_description = 'Nome do Piloto'
+
+    def get_piloto_numero_licenca(self, obj):
+        return obj.piloto.numero_licenca if obj.piloto else '-'
+    get_piloto_numero_licenca.short_description = 'Número da Licença do Piloto'
 
     def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -272,5 +418,8 @@ class VooAdmin(ExportMixin, admin.ModelAdmin):
 admin.site.register(Funcionario, FuncionarioAdmin)
 admin.site.register(Voo, VooAdmin)
 admin.site.register(Passageiro, PassageiroAdmin)
+admin.site.register(Reserva, ReservaAdmin)
+admin.site.register(Aviao, AviaoAdmin)
+admin.site.register(Piloto, PilotooAdmin)
 admin.site.unregister(Group)
 admin.site.unregister(Theme)

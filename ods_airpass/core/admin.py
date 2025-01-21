@@ -46,7 +46,7 @@ class PassageiroResource(resources.ModelResource):
         # Headers completos incluindo todos os campos de Passageiro, Reserva e Funcionário
         headers = dataset.headers + [
             'Assento', 'Classe', 'Preço', 'Data da Reserva',
-            'Voo - Origem', 'Voo - Destino', 'Voo - Status',
+            'Voo - Origem', 'Voo - Destino', 'Voo - Status', 'Voo - Horário',
             'Funcionário - Nome', 'Funcionário - Email', 'Funcionário - Data de Nascimento',
             'Funcionário - CPF', 'Funcionário - Cargo', 'Funcionário - Número de Identificação',
             'Funcionário - Supervisor', 'Funcionário - Ativo?'
@@ -95,6 +95,7 @@ class PassageiroResource(resources.ModelResource):
                     'Voo - Origem': voo.origem if voo else '',
                     'Voo - Destino': voo.destino if voo else '',
                     'Voo - Status': status_map.get(voo.status, 'Desconhecido') if voo else 'Desconhecido',
+                    'Voo - Horário': voo.horario if voo else '',
                     'Funcionário - Nome': funcionario.nome if funcionario else '',
                     'Funcionário - Email': funcionario.email if funcionario else '',
                     'Funcionário - Data de Nascimento': funcionario.data_nascimento if funcionario else '',

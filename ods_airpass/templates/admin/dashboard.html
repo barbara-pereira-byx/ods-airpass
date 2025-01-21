@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODS Airpass - Tela Inicial</title>
+    <style>
+        body { font-family: "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 20px; background-color: #FFFFFF; }
+        .header {
+            background-color: #ffffff;
+            color: #0493BB;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #0493BB;
+        }
+        .header-title { font-size: 2rem; margin: 0; }
+        .nav-bar {
+            background-color: #0493BB;
+            padding: 10px;
+            text-align: center;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 { margin-top: 20px; }
+        .tagline {
+            background: white;
+            border: 1px solid #d4edda;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-style: italic;
+            font-size: 1.2rem;
+        }
+        .flight-schedule {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #d4edda;
+            border-radius: 5px;
+        }
+        .flight {
+            margin: 10px 0;
+            padding: 10px;
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+        }
+        button {
+            background-color: white;
+            color: black;
+            border: 1px solid lightgrey; /* Adiciona um contorno cinza */
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%; /* Botão ocupa toda a largura */
+            margin: 10px 0; /* Espaçamento entre os botões */
+            font-weight: bold;
+        }
+        button:hover { background-color: #bee5eb;}
+        .icon { margin-right: 8px; }
+        .nav-link {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="header-title">ODS Airpass</h1>
+    </div>
+    <div class="nav-bar">
+        <h2>Gestão de Cadastrados</h2>
+    </div>
+
+    <div class="container">
+
+        <a class="nav-link" href="http://127.0.0.1:8000/core/aviao/">
+            <button><span class="icon">✈️</span>Aviões</button>
+        </a>
+
+        <a class="nav-link" href="http://127.0.0.1:8000/core/funcionario/">
+            <button><span class="icon">👨‍💼</span>Funcionários</button>
+        </a>
+
+        <a class="nav-link" href="http://127.0.0.1:8000/core/passageiro/">
+            <button><span class="icon">🧳</span>Passageiros</button>
+        </a>
+
+        <a class="nav-link" href="http://127.0.0.1:8000/core/piloto/">
+            <button><span class="icon">👩‍✈️</span>Pilotos</button>
+        </a>
+
+        <a class="nav-link" href="http://127.0.0.1:8000/core/reserva/">
+            <button><span class="icon">📅</span>Reservas</button>
+        </a>
+
+        <a class="nav-link" href="http://127.0.0.1:8000/core/voo/">
+            <button><span class="icon">🛫</span>Voos</button>
+        </a>
+
+        <div class="tagline">
+            Seu destino começa aqui. Voe alto com ODS Airpass!
+        </div>
+
+        <div class="flight-schedule">
+            <h2>Próximos Voos Agendados</h2>
+            {% for flight in flights %}
+            <div class="flight">
+                <strong>Voo:</strong> {{ flight.origem }} - {{ flight.destino }}<br>
+                <strong>Data e Hora:</strong> {{ flight.horario|date:"d/m/Y H:i" }}<br>
+                <strong>Status:</strong> {{ flight.get_status_display }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -20,8 +20,9 @@ from django.urls import path, include
 from . import views as core_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', core_views.index, name='index'),
+    path('core/', core_views.home, name='home'),
+    path('', core_views.home, name='home'),
+    path('', admin.site.urls),
     path('cancelar-voo/<int:voo_id>/', core_views.CancelarVooView.as_view(), name='cancelar_voo'),
     path('concluir-voo/<int:voo_id>/', core_views.ConcluirVooView.as_view(), name='concluir_voo'),
     path('atrasado-voo/<int:voo_id>/', core_views.AtrasadoVooView.as_view(), name='atrasado_voo'),
@@ -32,3 +33,4 @@ urlpatterns = [
 urlpatterns += [
     path('i18n/', include('django.conf.urls.i18n')),
 ]
+

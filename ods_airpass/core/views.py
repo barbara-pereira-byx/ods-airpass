@@ -4,16 +4,19 @@ from django.shortcuts import get_object_or_404
 from .constants import EnumStatusVoo
 from .models import Voo
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
 from django.urls import reverse
+from django.shortcuts import render
+from datetime import datetime
 
 def home(request):
-    flights = [
-        {"origin": "São Paulo", "destination": "Rio de Janeiro", "time": "14:30", "status": "Embarque"},
-        {"origin": "Brasília", "destination": "Salvador", "time": "15:10", "status": "Pendente"},
-        {"origin": "Porto Alegre", "destination": "Curitiba", "time": "16:00", "status": "Embarque"},
-    ]
-    return render(request, 'admin/dashboard.html', {'flights': flights})
+    # Obtém o horário atual
+    current_time = datetime.now()
+
+    # Filtra os voos futuros diretamente da tabela Voo, considerando o campo de data e hora
+    upcoming_flights = Voo.objects.filter(horario__gte=current_time).order_by('horario')
+
+    # Renderiza a página com os voos filtrados
+    return render(request, 'admin/dashboard.html', {'flights': upcoming_flights})
 
 def funcionarios_admin(request):
     return HttpResponseRedirect(reverse('admin:core_funcionario_changelist'))

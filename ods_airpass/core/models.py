@@ -222,6 +222,11 @@ class Piloto(models.Model):
 
 class Voo(models.Model):
     objects = None
+    horario = models.DateTimeField(
+        verbose_name='Data/hora do Voo',
+        validators=[validar_data_reserva],
+        default=timezone.now,
+    )
     origem = models.CharField(
         max_length=100,
         verbose_name='Origem do Voo',
@@ -262,7 +267,7 @@ class Voo(models.Model):
         verbose_name_plural = 'Voos'
 
     def __str__(self):
-        return f'{self.origem} - {self.destino}'
+        return f"{self.origem} - {self.destino}: {self.horario.strftime('%d/%m/%Y às %H:%M')}"
 
 
 
@@ -323,15 +328,10 @@ class Passageiro(models.Model):
 
 class Reserva(models.Model):
     objects = None
-    data_reserva = models.DateTimeField(
-        verbose_name='Data/hora da Reserva',
-        validators=[validar_data_reserva],
-        default=timezone.now,
-    )
     preco = models.FloatField(
         verbose_name='Preço da Reserva',
         validators=[MinValueValidator(0)],
-        default=0.0,
+        default=389.0,
     )
     assento = models.IntegerField(
         verbose_name='Assento Reservado',
@@ -373,16 +373,17 @@ class Reserva(models.Model):
             assunto = "Reserva Confirmada"
             mensagem = f"""
             Olá {self.passageiro.nome},
+            
             Sua reserva foi realizada com sucesso!
             Detalhes da reserva:
-            Data/Hora: {self.data_reserva.strftime('%d/%m/%Y às %H:%M')}
+            Data/Hora: {self.voo.horario.strftime('%d/%m/%Y às %H:%M')}
             Preço: R${self.preco}
             Assento: {self.assento}
             Classe: {classe_map.get(self.classe, 'Desconhecido')}
             Voo: {self.voo}
             Agradecemos por escolher nossa companhia aérea!
             Atenciosamente,
-            Sua Companhia Aérea
+            ODS Airpass
             """
             message = Mail(
                 from_email='no.reply.ods.airpass@gmail.com',
@@ -401,4 +402,4 @@ class Reserva(models.Model):
                 print(e)
 
     def __str__(self):
-        return f'{self.voo.__str__()}, Data: {self.data_reserva}, Assento: {self.assento}'
+        return f'{self.passageiro.nome} ({self.voo.__str__()})'

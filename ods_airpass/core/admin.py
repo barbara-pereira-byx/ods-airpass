@@ -84,25 +84,25 @@ class PassageiroResource(resources.ModelResource):
             for reserva in reservas:
                 new_row = passageiro_data.copy()
 
-                # Adicionando os dados da reserva e do funcionário à linha, com conversão dos nomes
+                # Garantindo que os objetos `voo` e `funcionario` existem antes de acessar seus atributos
+                voo = reserva.voo
+                funcionario = reserva.funcionario
+
                 new_row.update({
                     'Assento': reserva.assento,
                     'Classe': classe_map.get(reserva.classe, 'Desconhecido'),
                     'Preço': reserva.preco,
-                    'Data da Reserva': reserva.data_reserva,
-                    'Voo - Origem': reserva.voo.origem,
-                    'Voo - Destino': reserva.voo.destino,
-                    'Voo - Status': status_map.get(reserva.voo.status, 'Desconhecido'),
-                    'Funcionário - Nome': reserva.funcionario.nome if reserva.funcionario else '',
-                    'Funcionário - Email': reserva.funcionario.email if reserva.funcionario else '',
-                    'Funcionário - Data de Nascimento': reserva.funcionario.data_nascimento if reserva.funcionario else '',
-                    'Funcionário - CPF': reserva.funcionario.cpf if reserva.funcionario else '',
-                    'Funcionário - Cargo': cargo_map.get(reserva.funcionario.cargo,
-                                                         'Desconhecido') if reserva.funcionario else '',
-                    'Funcionário - Número de Identificação': str(
-                        reserva.funcionario.numero_identificacao) if reserva.funcionario else '',
-                    'Funcionário - Supervisor': reserva.funcionario.supervisor if reserva.funcionario else '',
-                    'Funcionário - Ativo?': reserva.funcionario.is_active if reserva.funcionario else '',
+                    'Voo - Origem': voo.origem if voo else '',
+                    'Voo - Destino': voo.destino if voo else '',
+                    'Voo - Status': status_map.get(voo.status, 'Desconhecido') if voo else 'Desconhecido',
+                    'Funcionário - Nome': funcionario.nome if funcionario else '',
+                    'Funcionário - Email': funcionario.email if funcionario else '',
+                    'Funcionário - Data de Nascimento': funcionario.data_nascimento if funcionario else '',
+                    'Funcionário - CPF': funcionario.cpf if funcionario else '',
+                    'Funcionário - Cargo': cargo_map.get(funcionario.cargo, 'Desconhecido') if funcionario else '',
+                    'Funcionário - Número de Identificação': str(funcionario.numero_identificacao) if funcionario else '',
+                    'Funcionário - Supervisor': funcionario.supervisor if funcionario else '',
+                    'Funcionário - Ativo?': funcionario.is_active if funcionario else '',
                 })
                 new_data.append(new_row)
 
@@ -121,6 +121,7 @@ class VooResource(resources.ModelResource):
     destino = fields.Field(column_name='Destino')
     numero = fields.Field(column_name='Número do Voo')
     status = fields.Field(column_name='Status')
+    horario = fields.Field(column_name='Horário')
 
     # Campos de Avião
     aviao_capacidade = fields.Field(column_name='Avião - Capacidade')
@@ -136,7 +137,7 @@ class VooResource(resources.ModelResource):
     class Meta:
         model = Voo
         fields = (
-            'origem', 'destino', 'numero', 'status',
+            'origem', 'destino', 'numero', 'status', 'horario',
             'aviao_capacidade', 'aviao_modelo', 'aviao_nome_companhia',
             'piloto_nome', 'piloto_data_nascimento', 'piloto_numero_licenca', 'piloto_email',
         )
@@ -154,6 +155,9 @@ class VooResource(resources.ModelResource):
         if obj and obj.status is not None:
             return dict(STATUS).get(obj.status, None)
         return None
+
+    def dehydrate_horario(self, obj):
+        return obj.horario.strftime('%d/%m/%Y às %H:%M') if obj.horario else None
 
     def dehydrate_aviao_capacidade(self, obj):
         avioes = Aviao.objects.filter(voo=obj)
@@ -193,7 +197,7 @@ class VooResource(resources.ModelResource):
 class ReservaForm(forms.ModelForm):
     class Meta:
         model = Reserva
-        fields = ['data_reserva', 'preco', 'assento', 'classe', 'passageiro', 'funcionario', 'voo']
+        fields = ['preco', 'assento', 'classe', 'passageiro', 'funcionario', 'voo']
 
     def clean(self):
         cleaned_data = super().clean()
@@ -240,7 +244,6 @@ class ReservaAdmin(admin.ModelAdmin):
         'get_origem_voo',
         'get_destino_voo',
         'get_status_voo',
-        'data_reserva',
         'preco',
         'assento',
         'classe',
@@ -273,33 +276,41 @@ class ReservaAdmin(admin.ModelAdmin):
     get_status_voo.short_description = 'Status do Voo'
 
     def get_form(self, request, obj=None, **kwargs):
-        print('Entrou')
         form = super().get_form(request, obj, **kwargs)
-        if not obj:
-            total_reservas = Reserva.objects.count()
 
-            base_price = {
-                1: 300,
-                2: 200,
-                3: 100,
-            }
+        # Base de preços por classe
+        base_price = {
+            1: 300,  # Primeira Classe
+            2: 200,  # Classe Executiva
+            3: 100,  # Classe Econômica
+        }
 
-            classe = form.base_fields.get('classe')
-            print('classe')
+        max_price = {
+            1: 1000,  # Limite para Primeira Classe
+            2: 800,  # Limite para Classe Executiva
+            3: 500,  # Limite para Classe Econômica
+        }
 
-            if classe and classe.initial:
-                print('Entrou classe')
-                print(f'Form Fields: {form.base_fields.keys()}')
-                incremento = total_reservas * 1.05
+        if not obj:  # Caso seja uma nova reserva
+            total_reservas = Reserva.objects.count()  # Contagem total de reservas
+
+            # Obtém o campo 'classe' e verifica seu valor
+            classe_field = form.base_fields.get('classe')
+            if classe_field:
+                # Define o preço inicial aleatório com incremento baseado no total de reservas
+                classe_value = classe_field.initial or 3  # Classe padrão (econômica) se não houver inicial
+                incremento = 1 + (total_reservas * 0.05)
 
                 preco_inicial = random.uniform(
-                    base_price.get(int(classe.initial), 100),
-                    base_price.get(int(classe.initial), 100) + 50
+                    base_price.get(int(classe_value), 100),
+                    base_price.get(int(classe_value), 100) + 50
                 ) * incremento
+
+                # Garante que o preço inicial não ultrapasse o limite definido
+                preco_inicial = min(preco_inicial, max_price.get(int(classe_value), 500))
 
                 # Verifique se o campo 'preco' está no formulário antes de definir seu valor inicial
                 if 'preco' in form.base_fields:
-                    print('Preço')
                     form.base_fields['preco'].initial = round(preco_inicial, 2)
 
         return form
@@ -373,6 +384,7 @@ class VooAdmin(ExportMixin, admin.ModelAdmin):
         'origem',
         'destino',
         'status',
+        'horario',
         'aviao__nome_companhia',
         'aviao__modelo',
         'piloto__nome',
@@ -381,6 +393,7 @@ class VooAdmin(ExportMixin, admin.ModelAdmin):
     list_display = [
         'origem',
         'destino',
+        'horario',
         'numero',
         'status',
         'get_piloto_nome',

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Voos</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> <!-- Link para o CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0493BB; /* Cor do cabeçalho */
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9; /* Linhas alternadas */
+        }
+
+        tr:hover {
+            background-color: #f1f1f1; /* Efeito ao passar o mouse */
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: #0493BB; /* Cor do botão */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0493BB; /* Cor do botão ao passar o mouse */
+        }
+    </style>
+</head>
+<body>
+    <h1>Relatório do Tráfego Aéreo</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Origem</th>
+                <th>Destino</th>
+                <th>Número do Voo</th>
+                <th>Status</th>
+                <th>Horário</th>
+                <th>Avião - Capacidade</th>
+                <th>Avião - Modelo</th>
+                <th>Avião - Nome da Companhia</th>
+                <th>Piloto - Nome</th>
+                <th>Piloto - Data de Nascimento</th>
+                <th>Piloto - Número de Licença</th>
+                <th>Piloto - E-mail</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for voo in voos %}
+            <tr>
+                <td>{{ voo.Origem }}</td>
+                <td>{{ voo.Destino }}</td>
+                <td>{{ voo.Numero }}</td>
+                <td>{{ voo.Status }}</td>
+                <td>{{ voo.Horario }}</td>
+                <td>{{ voo.AviaoCapacidade }}</td>
+                <td>{{ voo.AviaoModelo }}</td>
+                <td>{{ voo.AviaoNomeCompanhia }}</td>
+                <td>{{ voo.PilotoNome }}</td>
+                <td>{{ voo.PilotoDataNascimento }}</td>
+                <td>{{ voo.PilotoNumeroLicenca }}</td>
+                <td>{{ voo.PilotoEmail }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="button-group">
+        <a href="{% url 'home' %}">
+            <button>Voltar para a Página Inicial</button>
+        </a>
+    </div>
+</body>
+</html>

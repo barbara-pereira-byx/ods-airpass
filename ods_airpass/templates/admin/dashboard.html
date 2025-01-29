@@ -69,6 +69,14 @@
         .nav-link {
             text-decoration: none;
         }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        .button-group a {
+            flex: 1; /* Faz os botões ocuparem o espaço igualmente */
+            margin: 0 5px; /* Espaçamento entre os botões */
+        }
     </style>
 </head>
 <body>
@@ -104,6 +112,15 @@
         <a class="nav-link" href="http://127.0.0.1:8000/core/voo/">
             <button><span class="icon">🛫</span>Voos</button>
         </a>
+
+        <div class="button-group">
+            <a class="nav-link" href="{% url 'relatorio_reservas' %}">
+                <button>Relatório de Reservas</button>
+            </a>
+            <a class="nav-link" href="{% url 'relatorio_voos' %}">
+                <button>Relatório do Tráfego Aéreo</button>
+            </a>
+        </div>
 
         <div class="tagline">
             Seu destino começa aqui. Voe alto com ODS Airpass!

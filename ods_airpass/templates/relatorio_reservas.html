@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Reservas</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> <!-- Link para o CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0493BB; /* Cor do cabeçalho */
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9; /* Linhas alternadas */
+        }
+
+        tr:hover {
+            background-color: #f1f1f1; /* Efeito ao passar o mouse */
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .nav-link {
+            margin: 0 10px;
+        }
+
+        button {
+            background-color: #0493BB; /* Cor do botão */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0493BB; /* Cor do botão ao passar o mouse */
+        }
+    </style>
+</head>
+<body>
+    <h1>Relatório de Reservas</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome do Passageiro</th>
+                <th>Data de Nascimento</th>
+                <th>CPF/Passaporte</th>
+                <th>Email</th>
+                <th>Gênero</th>
+                <th>Nacionalidade</th>
+                <th>Frequência de Voos</th>
+                <th>Assento</th>
+                <th>Classe</th>
+                <th>Preço</th>
+                <th>Voo - Origem</th>
+                <th>Voo - Destino</th>
+                <th>Voo - Status</th>
+                <th>Voo - Horário</th>
+                <th>Funcionário - Nome</th>
+                <th>Funcionário - Email</th>
+                <th>Funcionário - Data de Nascimento</th>
+                <th>Funcionário - CPF</th>
+                <th>Funcionário - Cargo</th>
+                <th>Funcionário - Número de Identificação</th>
+                <th>Funcionário - Supervisor</th>
+                <th>Funcionário - Ativo?</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in reservas %}
+            <tr>
+                <td>{{ reserva.ID }}</td>
+                <td>{{ reserva.NomePassageiro }}</td>
+                <td>{{ reserva.DataNascimento }}</td>
+                <td>{{ reserva.CPFPasaporte }}</td>
+                <td>{{ reserva.Email }}</td>
+                <td>{{ reserva.Genero }}</td>
+                <td>{{ reserva.Nacionalidade }}</td>
+                <td>{{ reserva.FrequenciaVoos }}</td>
+                <td>{{ reserva.Assento }}</td>
+                <td>{{ reserva.Classe }}</td>
+                <td>{{ reserva.Preco }}</td>
+                <td>{{ reserva.VooOrigem }}</td>
+                <td>{{ reserva.VooDestino }}</td>
+                <td>{{ reserva.VooStatus }}</td>
+                <td>{{ reserva.VooHorario }}</td>
+                <td>{{ reserva.FuncionarioNome }}</td>
+                <td>{{ reserva.FuncionarioEmail }}</td>
+                <td>{{ reserva.FuncionarioDataNascimento }}</td>
+                <td>{{ reserva.FuncionarioCPF }}</td>
+                <td>{{ reserva.FuncionarioCargo }}</td>
+                <td>{{ reserva.FuncionarioNumeroIdentificacao }}</td>
+                <td>{{ reserva.FuncionarioSupervisor }}</td>
+                <td>{{ reserva.FuncionarioAtivo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="button-group">
+        <a class="nav-link" href="{% url 'home' %}">
+            <button>Voltar para a Página Inicial</button>
+        </a>
+    </div>
+</body>
+</html>

@@ -20,16 +20,16 @@ from django.urls import path, include
 from . import views as core_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),  # admin deve vir primeiro
-    path('', core_views.home, name='home'),  # Página inicial
-    path('core/', core_views.home, name='home'),  # Redirecionamento para home
-    path('core/relatorio_reservas/', core_views.RelatorioReservasView.as_view(), name='relatorio_reservas'),
-    path('core/relatorio_voos/', core_views.RelatorioVoosView.as_view(), name='relatorio_voos'),
+    path('core/', core_views.home, name='home'),
+    path('', core_views.home, name='home'),
+    path('relatorio_reservas/', core_views.RelatorioReservasView.as_view(), name='relatorio_reservas'),
+    path('relatorio_voos/', core_views.RelatorioVoosView.as_view(), name='relatorio_voos'),
     path('cancelar-voo/<int:voo_id>/', core_views.CancelarVooView.as_view(), name='cancelar_voo'),
     path('concluir-voo/<int:voo_id>/', core_views.ConcluirVooView.as_view(), name='concluir_voo'),
     path('atrasado-voo/<int:voo_id>/', core_views.AtrasadoVooView.as_view(), name='atrasado_voo'),
     path('agendado-voo/<int:voo_id>/', core_views.AgendadoVooView.as_view(), name='agendado_voo'),
     path('confirmado-voo/<int:voo_id>/', core_views.ConfirmadoVooView.as_view(), name='confirmado_voo'),
+    path('', admin.site.urls),  # Mover para o final
 ]
 
 urlpatterns += [
